@@ -1,3 +1,5 @@
+require 'uri'
+
 module Recaptcha
   module ClientHelper
     # Your public API can be specified in the +options+ hash or preferably
@@ -67,7 +69,7 @@ module Recaptcha
       raise RecaptchaError, "No public key specified." unless key
       error = options[:error] ||= ((defined? flash) ? flash[:recaptcha_error] : "")
       uri   = Recaptcha.configuration.api_server_url(options[:ssl])
-      uri += "?hl=#{options[:hl]}" unless options[:hl].blank?
+      uri += "?#{hash_to_query(options.slice(:hl, :render, :onload))}"
 
       v2_options = options.slice(:size, :tabindex, :theme, :type, :callback, :expired_callback).map {|k,v| %{data-#{k.to_s.gsub(/_/,'-')}="#{v}"} }.join(" ")
 
@@ -103,6 +105,10 @@ module Recaptcha
     end
 
     private
+
+    def hash_to_query(hash)
+      hash.map { |k, v| "#{URI::ESCAPE.escape(k)}=#{URI::ESCAPE.escape(v)}" }.join('&')
+    end
 
     def hash_to_json(hash)
       result = "{"
